@@ -9,7 +9,102 @@
 </head>
 <body>
   <canvas id="gameCanvas"></canvas>
+
+  <!-- Main Menu -->
+  <div id="main-menu">
+    <canvas id="menu-particles"></canvas>
+    <div class="menu-logo">STACK.io</div>
+    <div class="menu-subtitle">SURVIVE · BUILD · DOMINATE</div>
+    <input type="text" id="name-input" class="menu-input" placeholder="Enter your name..." maxlength="16" autocomplete="off">
+    <button id="btn-play" class="btn-play">PLAY</button>
+    <div class="menu-online">
+      <span class="online-dot"></span>
+      <span id="online-count">-- players online</span>
+    </div>
+    <div class="menu-controls">
+      <div class="control-item">
+        <div class="control-icon">🖱️</div>
+        <span>Move</span>
+      </div>
+      <div class="control-item">
+        <div class="control-icon">⚔️</div>
+        <span>Auto-Attack</span>
+      </div>
+      <div class="control-item">
+        <div class="control-icon">⬆️</div>
+        <span>Level Up</span>
+      </div>
+    </div>
+    <div class="menu-nav">
+      <button class="btn-nav">SHOP</button>
+      <button class="btn-nav">LEADERBOARD</button>
+      <button class="btn-nav">HOW TO PLAY</button>
+    </div>
+  </div>
+
+  <!-- Level Up Overlay -->
+  <div id="levelup-overlay">
+    <div class="levelup-title">LEVEL UP!</div>
+    <div class="levelup-subtitle">Choose your upgrade</div>
+    <div id="levelup-cards" class="levelup-cards"></div>
+  </div>
+
+  <!-- Death Screen -->
+  <div id="death-screen">
+    <div class="death-title">YOU DIED</div>
+    <div id="death-killer" class="death-killer"></div>
+    <div id="death-stats" class="death-stats"></div>
+    <div class="death-buttons">
+      <button id="btn-restart" class="btn-restart">PLAY AGAIN</button>
+      <button class="btn-share">SHARE</button>
+    </div>
+  </div>
+
+  <!-- How To Play Modal -->
+  <div id="howtoplay-overlay" class="howtoplay-overlay">
+    <div class="howtoplay-panel">
+      <div class="howtoplay-header">
+        <h2 class="howtoplay-title">HOW TO PLAY</h2>
+        <button class="howtoplay-close" id="howtoplay-close">&times;</button>
+      </div>
+      <div class="howtoplay-content">
+        <div class="htp-section">
+          <h3>Movement</h3>
+          <p>Desktop: Move mouse to aim, character follows cursor.</p>
+          <p>Mobile: Touch and drag the virtual joystick.</p>
+        </div>
+        <div class="htp-section">
+          <h3>Combat</h3>
+          <p>Weapons fire automatically at nearby enemies!</p>
+          <p>You start with Orbit + Bullet. Level up to unlock more.</p>
+        </div>
+        <div class="htp-section">
+          <h3>Level Up</h3>
+          <p>Collect XP orbs from killed enemies to level up.</p>
+          <p>Choose from 3 options: new weapons, upgrades, or passives.</p>
+        </div>
+        <div class="htp-section">
+          <h3>Weapon Evolution</h3>
+          <p>Max out 2 compatible weapons (Lv.5) to unlock a powerful evolved weapon!</p>
+          <p>Orbit + Shockwave = Plasma Storm</p>
+          <p>Bullet + Laser = Railgun</p>
+          <p>Laser + Orbit = Death Ray</p>
+          <p>Bullet + Shockwave = Meteor Shower</p>
+          <p>Mines + Shield = Fortress</p>
+          <p>Mines + Shockwave = Void Traps</p>
+        </div>
+        <div class="htp-section">
+          <h3>Tips</h3>
+          <p>Stay in the safe zone (green circle) when you spawn.</p>
+          <p>Kill pentagon mobs for the most XP!</p>
+          <p>Build toward weapon evolutions for maximum power.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="ui-layer"></div>
+  <script src="/socket.io/socket.io.js"></script>
   <script type="module" src="js/main.js"></script>
 </body>
 </html>

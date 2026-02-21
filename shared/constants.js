@@ -105,3 +105,69 @@ export const SKIN_TIERS = {
   legendary: { price: 4.99 },
   bundle: { price: 9.99 },
 };
+
+// ===== WEAPON EVOLUTION SYSTEM =====
+// When two specific weapons are both at max level (5), they fuse into a powerful evolved weapon.
+// The two base weapons are consumed and replaced by the evolved weapon.
+export const EVOLUTIONS = {
+  plasma_storm: {
+    name: 'Plasma Storm',
+    description: 'Orbit + Shockwave = Rotating storm that pulses AoE',
+    recipe: ['orbit', 'shockwave'],
+    damage: 35,
+    range: 150,
+    rate: 1500,
+    count: 4,
+    rotationSpeed: Math.PI * 3,
+    pulseRadius: 80,
+  },
+  railgun: {
+    name: 'Railgun',
+    description: 'Bullet + Laser = Piercing high-speed bolt',
+    recipe: ['bullet', 'laser'],
+    damage: 60,
+    speed: 16,
+    rate: 800,
+    length: 500,
+    piercing: true,
+  },
+  minefield_shield: {
+    name: 'Fortress',
+    description: 'Mines + Shield = Ring of protective mines',
+    recipe: ['mines', 'shield'],
+    damage: 40,
+    mineCount: 8,
+    mineRadius: 120,
+    absorb: 40,
+    recharge: 2000,
+  },
+  meteor_shower: {
+    name: 'Meteor Shower',
+    description: 'Bullet + Shockwave = Homing explosive bullets',
+    recipe: ['bullet', 'shockwave'],
+    damage: 45,
+    rate: 600,
+    speed: 6,
+    explosionRadius: 60,
+    homing: true,
+  },
+  death_laser: {
+    name: 'Death Ray',
+    description: 'Laser + Orbit = Spinning laser beams',
+    recipe: ['laser', 'orbit'],
+    damage: 30,
+    beamCount: 3,
+    length: 400,
+    rotationSpeed: Math.PI * 1.5,
+  },
+  void_mines: {
+    name: 'Void Traps',
+    description: 'Mines + Shockwave = Mines that pull enemies in',
+    recipe: ['mines', 'shockwave'],
+    damage: 50,
+    pullRadius: 100,
+    pullForce: 3,
+    rate: 1200,
+    lifetime: 6000,
+  },
+};
