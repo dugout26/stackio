@@ -116,6 +116,11 @@ export class Renderer {
 
   // ========== MULTIPLAYER ENTITY RENDERING ==========
 
+  /** Set the skin manager reference for weapon/nametag rendering */
+  setSkinManager(skinManager) {
+    this._skinManager = skinManager;
+  }
+
   /** Draw all players from server state */
   drawPlayers(players, prevPlayers, network, camera, localPlayerId, skinManager) {
     const ctx = this.ctx;
@@ -168,11 +173,22 @@ export class Renderer {
       ctx.fillStyle = '#ffffff';
       ctx.fill();
 
-      // Name + level
-      ctx.fillStyle = '#ffffff';
+      // Name + level (with nametag skin for local player)
+      ctx.save();
+      if (isLocal && skinManager) {
+        const tag = skinManager.getNametag();
+        ctx.fillStyle = tag.fillStyle;
+        if (tag.shadowColor) {
+          ctx.shadowColor = tag.shadowColor;
+          ctx.shadowBlur = tag.shadowBlur;
+        }
+      } else {
+        ctx.fillStyle = '#ffffff';
+      }
       ctx.font = 'bold 14px Segoe UI, sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(`${p.n} [Lv.${p.l}]`, sx, sy - radius - 20);
+      ctx.restore();
 
       // HP bar
       const barWidth = 40;
@@ -245,25 +261,41 @@ export class Renderer {
   }
 
   /** Draw projectiles from server state */
-  drawProjectiles(projectiles, camera) {
+  drawProjectiles(projectiles, camera, localPlayerId) {
     const ctx = this.ctx;
+    // Get weapon colors from skin manager for local player projectiles
+    const wc = this._skinManager ? this._skinManager.getWeaponColors() : null;
 
     for (const p of projectiles) {
+      // Check if this projectile belongs to local player (for weapon skin)
+      const isLocal = p.ow && p.ow === localPlayerId;
+      // Local player uses equipped weapon skin colors; others use their player color
+      let colors = null;
+      if (isLocal && wc) {
+        colors = wc;
+      } else if (!isLocal && p.pc) {
+        // Generate tinted colors from player's character color
+        colors = this._playerColorToWeaponColors(p.pc);
+      }
+
       switch (p.t) {
         case 'orbit':
-          this._drawOrbit(ctx, camera, p);
+          this._drawOrbit(ctx, camera, p, colors);
           break;
         case 'bullet':
-          this._drawBullet(ctx, camera, p);
+          this._drawBullet(ctx, camera, p, colors);
           break;
         case 'shockwave':
-          this._drawShockwave(ctx, camera, p);
+          this._drawShockwave(ctx, camera, p, colors);
           break;
         case 'laser':
-          this._drawLaser(ctx, camera, p);
+          this._drawLaser(ctx, camera, p, colors);
           break;
         case 'mines':
-          this._drawMine(ctx, camera, p);
+          this._drawMine(ctx, camera, p, colors);
+          break;
+        case 'shield':
+          this._drawShield(ctx, camera, p);
           break;
         // Evolution weapons
         case 'plasma_storm':
@@ -275,42 +307,49 @@ export class Renderer {
         case 'meteor':
           this._drawMeteor(ctx, camera, p);
           break;
+        case 'fortress_mine':
+          this._drawFortressMine(ctx, camera, p);
+          break;
+        case 'void_mine':
+          this._drawVoidMine(ctx, camera, p);
+          break;
       }
     }
   }
 
-  _drawOrbit(ctx, camera, p) {
+  _drawOrbit(ctx, camera, p, colors) {
     if (!camera.isVisible(p.x, p.y, (p.r || 10) + 10)) return;
     const { x: sx, y: sy } = camera.worldToScreen(p.x, p.y);
     ctx.beginPath();
     ctx.arc(sx, sy, p.r || 10, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.fillStyle = colors ? colors.orbit : 'rgba(255,255,255,0.9)';
     ctx.fill();
-    ctx.strokeStyle = '#00d4ff';
+    ctx.strokeStyle = colors ? colors.orbitStroke : '#00d4ff';
     ctx.lineWidth = 2;
     ctx.stroke();
   }
 
-  _drawBullet(ctx, camera, p) {
+  _drawBullet(ctx, camera, p, colors) {
     if (!camera.isVisible(p.x, p.y, 10)) return;
     const { x: sx, y: sy } = camera.worldToScreen(p.x, p.y);
     ctx.beginPath();
     ctx.arc(sx, sy, p.r || 4, 0, Math.PI * 2);
-    ctx.fillStyle = '#f1c40f';
+    ctx.fillStyle = colors ? colors.bullet : '#f1c40f';
     ctx.fill();
   }
 
-  _drawShockwave(ctx, camera, p) {
+  _drawShockwave(ctx, camera, p, colors) {
     if (!camera.isVisible(p.x, p.y, (p.r || 50) + 20)) return;
     const { x: sx, y: sy } = camera.worldToScreen(p.x, p.y);
+    const alpha = (p.al || 0.5) * 0.6;
     ctx.beginPath();
     ctx.arc(sx, sy, p.r || 50, 0, Math.PI * 2);
-    ctx.strokeStyle = `rgba(0, 212, 255, ${(p.al || 0.5) * 0.6})`;
+    ctx.strokeStyle = colors ? colors.shockwave.replace('__ALPHA__', alpha) : `rgba(0, 212, 255, ${alpha})`;
     ctx.lineWidth = 3 + (p.lv || 1);
     ctx.stroke();
   }
 
-  _drawLaser(ctx, camera, p) {
+  _drawLaser(ctx, camera, p, colors) {
     const start = camera.worldToScreen(p.x, p.y);
     const angle = p.a || 0;
     const length = p.ln || 300;
@@ -322,16 +361,16 @@ export class Renderer {
     ctx.beginPath();
     ctx.moveTo(start.x, start.y);
     ctx.lineTo(end.x, end.y);
-    ctx.strokeStyle = `rgba(231, 76, 60, ${alpha})`;
+    ctx.strokeStyle = colors ? colors.laser.replace('__ALPHA__', alpha) : `rgba(231, 76, 60, ${alpha})`;
     ctx.lineWidth = 4 + (p.lv || 1) * 2;
     ctx.stroke();
     // Inner glow
-    ctx.strokeStyle = `rgba(255, 200, 200, ${alpha * 0.8})`;
+    ctx.strokeStyle = colors ? colors.laserInner.replace('__ALPHA__', alpha * 0.8) : `rgba(255, 200, 200, ${alpha * 0.8})`;
     ctx.lineWidth = 2;
     ctx.stroke();
   }
 
-  _drawMine(ctx, camera, p) {
+  _drawMine(ctx, camera, p, colors) {
     const radius = p.r || 10;
     if (!camera.isVisible(p.x, p.y, radius + 5)) return;
     const { x: sx, y: sy } = camera.worldToScreen(p.x, p.y);
@@ -346,7 +385,7 @@ export class Renderer {
     }
     ctx.closePath();
     const blink = Math.sin((p.lf || 1) * 8) > 0 ? 0.9 : 0.4;
-    ctx.fillStyle = `rgba(231, 76, 60, ${blink})`;
+    ctx.fillStyle = colors ? colors.mine.replace('__ALPHA__', blink) : `rgba(231, 76, 60, ${blink})`;
     ctx.fill();
     ctx.strokeStyle = 'rgba(255,255,255,0.3)';
     ctx.lineWidth = 1;
@@ -420,6 +459,108 @@ export class Renderer {
     ctx.fill();
     ctx.strokeStyle = '#f1c40f';
     ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  _drawShield(ctx, camera, p) {
+    if (!camera.isVisible(p.x, p.y, 40)) return;
+    const { x: sx, y: sy } = camera.worldToScreen(p.x, p.y);
+    const angle = p.a || 0;
+    const broken = p.br === 1;
+    const hpRatio = (p.mh > 0) ? p.hp / p.mh : 0;
+    const level = p.lv || 1;
+    const arcSize = Math.PI * 0.5 + level * 0.15; // Shield arc width grows with level
+    const radius = 28 + level * 2;
+
+    if (broken) {
+      // Broken shield: dim flicker
+      const flicker = Math.sin(Date.now() * 0.01) * 0.15 + 0.15;
+      ctx.beginPath();
+      ctx.arc(sx, sy, radius, angle - arcSize, angle + arcSize);
+      ctx.strokeStyle = `rgba(100, 100, 100, ${flicker})`;
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    } else {
+      // Active shield arc
+      const alpha = 0.3 + hpRatio * 0.5;
+      ctx.beginPath();
+      ctx.arc(sx, sy, radius, angle - arcSize, angle + arcSize);
+      ctx.strokeStyle = `rgba(52, 152, 219, ${alpha})`;
+      ctx.lineWidth = 4 + level;
+      ctx.stroke();
+      // Inner glow
+      ctx.beginPath();
+      ctx.arc(sx, sy, radius, angle - arcSize, angle + arcSize);
+      ctx.strokeStyle = `rgba(150, 220, 255, ${alpha * 0.6})`;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+  }
+
+  _drawFortressMine(ctx, camera, p) {
+    if (!camera.isVisible(p.x, p.y, 15)) return;
+    const { x: sx, y: sy } = camera.worldToScreen(p.x, p.y);
+    const r = p.r || 10;
+    // Glowing hexagonal mine
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const a = (Math.PI * 2 / 6) * i;
+      const px = sx + Math.cos(a) * r;
+      const py = sy + Math.sin(a) * r;
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(52, 152, 219, 0.6)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(150, 220, 255, 0.8)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    // Center dot
+    ctx.beginPath();
+    ctx.arc(sx, sy, 3, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+  }
+
+  _drawVoidMine(ctx, camera, p) {
+    if (!camera.isVisible(p.x, p.y, (p.pr || 100) + 10)) return;
+    const { x: sx, y: sy } = camera.worldToScreen(p.x, p.y);
+    const r = p.r || 12;
+    const pullRadius = p.pr || 100;
+    const pulse = Math.sin(Date.now() * 0.004) * 0.15 + 0.85;
+
+    // Pull radius indicator (faint circle)
+    ctx.beginPath();
+    ctx.arc(sx, sy, pullRadius * pulse, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(155, 89, 182, 0.12)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Swirl lines toward center
+    for (let i = 0; i < 4; i++) {
+      const a = (Date.now() * 0.003) + (Math.PI * 2 / 4) * i;
+      const outerX = sx + Math.cos(a) * pullRadius * 0.6;
+      const outerY = sy + Math.sin(a) * pullRadius * 0.6;
+      ctx.beginPath();
+      ctx.moveTo(outerX, outerY);
+      ctx.lineTo(sx, sy);
+      ctx.strokeStyle = 'rgba(155, 89, 182, 0.15)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+
+    // Mine body - dark void orb
+    ctx.beginPath();
+    ctx.arc(sx, sy, r, 0, Math.PI * 2);
+    const grad = ctx.createRadialGradient(sx, sy, 0, sx, sy, r);
+    grad.addColorStop(0, 'rgba(10, 10, 46, 0.9)');
+    grad.addColorStop(0.7, 'rgba(155, 89, 182, 0.6)');
+    grad.addColorStop(1, 'rgba(155, 89, 182, 0.2)');
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.strokeStyle = '#9b59b6';
+    ctx.lineWidth = 1.5;
     ctx.stroke();
   }
 
@@ -653,7 +794,72 @@ export class Renderer {
     }
   }
 
+  // ========== CROSSHAIR CURSOR ==========
+
+  drawCrosshair(mouseX, mouseY) {
+    if (IS_MOBILE) return; // Mobile uses joystick
+    const ctx = this.ctx;
+    const size = 14;
+    const gap = 5;
+    const lineWidth = 2;
+
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.lineWidth = lineWidth;
+    ctx.lineCap = 'round';
+
+    // Top
+    ctx.beginPath();
+    ctx.moveTo(mouseX, mouseY - gap);
+    ctx.lineTo(mouseX, mouseY - size);
+    ctx.stroke();
+
+    // Bottom
+    ctx.beginPath();
+    ctx.moveTo(mouseX, mouseY + gap);
+    ctx.lineTo(mouseX, mouseY + size);
+    ctx.stroke();
+
+    // Left
+    ctx.beginPath();
+    ctx.moveTo(mouseX - gap, mouseY);
+    ctx.lineTo(mouseX - size, mouseY);
+    ctx.stroke();
+
+    // Right
+    ctx.beginPath();
+    ctx.moveTo(mouseX + gap, mouseY);
+    ctx.lineTo(mouseX + size, mouseY);
+    ctx.stroke();
+
+    // Center dot
+    ctx.beginPath();
+    ctx.arc(mouseX, mouseY, 2, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0, 212, 255, 0.9)';
+    ctx.fill();
+
+    ctx.restore();
+  }
+
   // ========== UTILITY ==========
+
+  /** Convert a player color (hex) to weapon tint colors for their projectiles */
+  _playerColorToWeaponColors(hexColor) {
+    // Parse hex to RGB
+    const hex = hexColor.replace('#', '');
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    return {
+      orbit: `rgba(${r}, ${g}, ${b}, 0.9)`,
+      orbitStroke: hexColor,
+      bullet: hexColor,
+      laser: `rgba(${r}, ${g}, ${b}, __ALPHA__)`,
+      laserInner: `rgba(${Math.min(255, r + 80)}, ${Math.min(255, g + 80)}, ${Math.min(255, b + 80)}, __ALPHA__)`,
+      shockwave: `rgba(${r}, ${g}, ${b}, __ALPHA__)`,
+      mine: `rgba(${r}, ${g}, ${b}, __ALPHA__)`,
+    };
+  }
 
   _roundRect(ctx, x, y, w, h, r) {
     if (w < 0) w = 0;

@@ -66,7 +66,7 @@ export class Network {
       if (this.onJoined) this.onJoined(data);
     });
 
-    // Game state update
+    // Game state update (with delta compression)
     this.socket.on('gameState', (state) => {
       // Store previous state for interpolation
       this.prevPlayers = this.players;
@@ -74,11 +74,20 @@ export class Network {
       this.prevOrbs = this.orbs;
       this.lastStateTime = performance.now();
 
-      // Update current state
-      this.players = state.p || [];
-      this.mobs = state.m || [];
+      if (state.full) {
+        // Full snapshot - replace everything
+        this.players = state.p || [];
+        this.mobs = state.m || [];
+        this.orbs = state.o || [];
+      } else {
+        // Delta update - merge changes
+        this.players = this._applyDelta(this.players, state.p || []);
+        this.mobs = this._applyDelta(this.mobs, state.m || []);
+        this.orbs = this._applyDelta(this.orbs, state.o || []);
+      }
+
+      // Projectiles always sent in full (ephemeral each tick)
       this.projectiles = state.pr || [];
-      this.orbs = state.o || [];
 
       if (this.onGameState) this.onGameState(state);
     });
@@ -175,6 +184,29 @@ export class Network {
       x: prev.x + (current.x - prev.x) * t,
       y: prev.y + (current.y - prev.y) * t,
     };
+  }
+
+  /**
+   * Apply delta updates to existing entity list.
+   * Entities with `rm: true` are removed; others are updated or added.
+   */
+  _applyDelta(existing, updates) {
+    if (!updates || updates.length === 0) return existing;
+
+    const map = new Map();
+    for (const e of existing) {
+      map.set(e.i, e);
+    }
+
+    for (const u of updates) {
+      if (u.rm) {
+        map.delete(u.i);
+      } else {
+        map.set(u.i, u);
+      }
+    }
+
+    return Array.from(map.values());
   }
 
   /** Disconnect from server */

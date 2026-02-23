@@ -77,10 +77,13 @@ export class ServerWeapons {
 
   /**
    * Get weapon stats with level scaling
+   * @param {number} playerLevel - player's character level for base damage bonus
    */
-  _getDamage(key, level, passives) {
+  _getDamage(key, level, passives, playerLevel = 1) {
     const base = WEAPONS[key].damage;
-    let dmg = base * (1 + (level - 1) * 0.2);
+    // Weapon level scaling + player level bonus (+3% per character level)
+    const levelDmgBonus = 1 + (playerLevel - 1) * 0.03;
+    let dmg = base * (1 + (level - 1) * 0.2) * levelDmgBonus;
     // Critical chance
     const critChance = (passives.critical || 0) * PASSIVES.critical.perLevel;
     if (Math.random() < critChance) {
@@ -89,8 +92,10 @@ export class ServerWeapons {
     return dmg;
   }
 
-  _getRate(key, level) {
-    return WEAPONS[key].rate / (1 + (level - 1) * 0.1);
+  /** Get weapon fire rate with player level scaling (+2% attack speed per level) */
+  _getRate(key, level, playerLevel = 1) {
+    const levelAtkSpeedBonus = 1 + (playerLevel - 1) * 0.02;
+    return WEAPONS[key].rate / ((1 + (level - 1) * 0.1) * levelAtkSpeedBonus);
   }
 
   _getRange(key, level, passives) {
@@ -135,7 +140,7 @@ export class ServerWeapons {
           this._updateMines(dt, player, level, passives, mobs, otherPlayers, now, allHits, allProjectiles);
           break;
         case 'shield':
-          this._updateShield(dt, level);
+          this._updateShield(dt, level, player, allProjectiles);
           break;
         // Evolution weapons
         case 'plasma_storm':
@@ -150,12 +155,19 @@ export class ServerWeapons {
         case 'meteor_shower':
           this._updateMeteorShower(dt, player, passives, mobs, otherPlayers, now, allHits, allProjectiles);
           break;
-        // minefield_shield and void_mines use simpler update logic
         case 'minefield_shield':
+          this._updateMinefieldShield(dt, player, passives, mobs, otherPlayers, now, allHits, allProjectiles);
+          break;
         case 'void_mines':
-          // Placeholder - these evolved weapons are powerful but use base mechanics
+          this._updateVoidMines(dt, player, passives, mobs, otherPlayers, now, allHits, allProjectiles);
           break;
       }
+    }
+
+    // Tag all projectiles with owner ID and color for client rendering
+    for (const p of allProjectiles) {
+      p.ow = player.id;
+      p.pc = player.color; // Player color for projectile tinting
     }
 
     return { hits: allHits, projectiles: allProjectiles };
@@ -167,7 +179,7 @@ export class ServerWeapons {
     const data = WEAPONS.orbit;
     const count = data.count + (level - 1);
     const range = this._getRange('orbit', level, passives);
-    const damage = this._getDamage('orbit', level, passives);
+    const damage = this._getDamage('orbit', level, passives, player.level);
     const orbRadius = 8 + level;
 
     st.angle += data.rotationSpeed * dt;
@@ -227,8 +239,8 @@ export class ServerWeapons {
   _updateBullet(dt, player, level, passives, mobs, otherPlayers, now, hits, projectiles) {
     const st = this.state.bullet;
     const data = WEAPONS.bullet;
-    const damage = this._getDamage('bullet', level, passives);
-    const rate = this._getRate('bullet', level);
+    const damage = this._getDamage('bullet', level, passives, player.level);
+    const rate = this._getRate('bullet', level, player.level);
     const bulletCount = 1 + (level - 1);
 
     // Move existing bullets
@@ -316,8 +328,8 @@ export class ServerWeapons {
   // --- SHOCKWAVE ---
   _updateShockwave(dt, player, level, passives, mobs, otherPlayers, now, hits, projectiles) {
     const st = this.state.shockwave;
-    const damage = this._getDamage('shockwave', level, passives);
-    const rate = this._getRate('shockwave', level);
+    const damage = this._getDamage('shockwave', level, passives, player.level);
+    const rate = this._getRate('shockwave', level, player.level);
     const maxRadius = WEAPONS.shockwave.radius * (1 + (level - 1) * 0.2) *
                       (1 + (passives.area || 0) * PASSIVES.area.perLevel);
 
@@ -380,8 +392,8 @@ export class ServerWeapons {
   // --- LASER ---
   _updateLaser(dt, player, level, passives, mobs, otherPlayers, now, hits, projectiles) {
     const st = this.state.laser;
-    const damage = this._getDamage('laser', level, passives);
-    const rate = this._getRate('laser', level);
+    const damage = this._getDamage('laser', level, passives, player.level);
+    const rate = this._getRate('laser', level, player.level);
     const length = WEAPONS.laser.length + (level - 1) * 30;
 
     // Update existing beams
@@ -450,9 +462,11 @@ export class ServerWeapons {
   // --- MINES ---
   _updateMines(dt, player, level, passives, mobs, otherPlayers, now, hits, projectiles) {
     const st = this.state.mines;
-    const damage = this._getDamage('mines', level, passives);
-    const rate = this._getRate('mines', level);
-    const mineRadius = 8 + level;
+    const damage = this._getDamage('mines', level, passives, player.level);
+    const rate = this._getRate('mines', level, player.level);
+    const mineRadius = 12 + level * 2; // Larger trigger radius for reliable detection
+    const areaBonus = 1 + (passives.area || 0) * PASSIVES.area.perLevel;
+    const triggerRadius = mineRadius * areaBonus;
 
     // Update existing mines
     for (const m of st.mines) {
@@ -462,7 +476,7 @@ export class ServerWeapons {
         // Check vs mobs
         for (const mob of mobs) {
           if (mob.dead) continue;
-          if (circleCollision(m.x, m.y, mineRadius, mob.x, mob.y, mob.size)) {
+          if (circleCollision(m.x, m.y, triggerRadius, mob.x, mob.y, mob.size)) {
             m.exploded = true;
             hits.push({ type: 'mob', target: mob, damage, owner: player, x: mob.x, y: mob.y });
             break;
@@ -473,7 +487,7 @@ export class ServerWeapons {
         if (!m.exploded) {
           for (const other of otherPlayers) {
             if (!other.alive || other.id === player.id) continue;
-            if (circleCollision(m.x, m.y, mineRadius, other.x, other.y, other.radius)) {
+            if (circleCollision(m.x, m.y, triggerRadius, other.x, other.y, other.radius)) {
               m.exploded = true;
               hits.push({ type: 'player', target: other, damage, owner: player, x: other.x, y: other.y });
               break;
@@ -485,13 +499,16 @@ export class ServerWeapons {
 
     st.mines = st.mines.filter(m => m.life > 0 && !m.exploded);
 
-    // Drop new mine
+    // Drop new mine slightly behind player (offset from player position)
     if (now - st.lastDrop >= rate) {
       st.lastDrop = now;
+      const dropOffset = 20 + level * 5;
+      const dropAngle = player.angle + Math.PI; // Behind player
+      const spreadAngle = (Math.random() - 0.5) * 1.2; // Random spread
       st.mines.push({
         id: 'mn' + (nextProjId++),
-        x: player.x,
-        y: player.y,
+        x: player.x + Math.cos(dropAngle + spreadAngle) * dropOffset,
+        y: player.y + Math.sin(dropAngle + spreadAngle) * dropOffset,
         life: WEAPONS.mines.lifetime / 1000,
         exploded: false,
       });
@@ -505,7 +522,7 @@ export class ServerWeapons {
           t: 'mines',
           x: Math.round(m.x),
           y: Math.round(m.y),
-          r: mineRadius,
+          r: Math.round(triggerRadius),
           lf: Math.round(m.life * 10) / 10,
         });
       }
@@ -513,7 +530,7 @@ export class ServerWeapons {
   }
 
   // --- SHIELD ---
-  _updateShield(dt, level) {
+  _updateShield(dt, level, player, projectiles) {
     const st = this.state.shield;
     if (!st) return;
 
@@ -528,6 +545,21 @@ export class ServerWeapons {
       }
     } else {
       st.maxHp = maxAbsorb;
+    }
+
+    // Send shield visual to client
+    if (player) {
+      projectiles.push({
+        i: player.id + '_sh',
+        t: 'shield',
+        x: Math.round(player.x),
+        y: Math.round(player.y),
+        a: player.angle,
+        hp: Math.round(st.hp),
+        mh: st.maxHp,
+        br: st.broken ? 1 : 0,
+        lv: level,
+      });
     }
   }
 
@@ -823,6 +855,174 @@ export class ServerWeapons {
           i: m.id, t: 'meteor',
           x: Math.round(m.x), y: Math.round(m.y),
           a: Math.round(m.angle * 100) / 100, r: 8,
+        });
+      }
+    }
+  }
+
+  // --- MINEFIELD SHIELD / FORTRESS (mines + shield) ---
+  _updateMinefieldShield(dt, player, passives, mobs, otherPlayers, now, hits, projectiles) {
+    const st = this.state.minefield_shield;
+    if (!st) return;
+    const evo = EVOLUTIONS.minefield_shield;
+    const critChance = (passives.critical || 0) * PASSIVES.critical.perLevel;
+
+    // Shield component: recharge
+    if (st.broken) {
+      st.rechargeTimer -= dt * 1000;
+      if (st.rechargeTimer <= 0) {
+        st.broken = false;
+        st.hp = st.maxHp;
+      }
+    }
+
+    // Send shield visual
+    projectiles.push({
+      i: player.id + '_fs',
+      t: 'shield',
+      x: Math.round(player.x),
+      y: Math.round(player.y),
+      a: player.angle,
+      hp: Math.round(st.hp),
+      mh: st.maxHp,
+      br: st.broken ? 1 : 0,
+      lv: 5,
+    });
+
+    // Rotating ring of mines around player
+    st.angle += Math.PI * 0.5 * dt;
+    const mineRadius = evo.mineRadius;
+
+    for (let i = 0; i < evo.mineCount; i++) {
+      const a = st.angle + (Math.PI * 2 / evo.mineCount) * i;
+      const mx = player.x + Math.cos(a) * mineRadius;
+      const my = player.y + Math.sin(a) * mineRadius;
+
+      projectiles.push({
+        i: player.id + '_fm' + i,
+        t: 'fortress_mine',
+        x: Math.round(mx),
+        y: Math.round(my),
+        r: 10,
+      });
+
+      // Check collision with enemies
+      const allTargets = [...mobs.filter(m => !m.dead), ...otherPlayers.filter(p => p.alive && p.id !== player.id)];
+      for (const target of allTargets) {
+        const tr = target.size || target.radius || 15;
+        if (circleCollision(mx, my, 10, target.x, target.y, tr)) {
+          const lastHit = (st._hitCooldowns || new Map()).get(target.id) || 0;
+          if (!st._hitCooldowns) st._hitCooldowns = new Map();
+          if (now - lastHit > 300) {
+            st._hitCooldowns.set(target.id, now);
+            let dmg = evo.damage;
+            if (Math.random() < critChance) dmg *= 2;
+            const type = target.id.startsWith('m') ? 'mob' : 'player';
+            hits.push({ type, target, damage: dmg, owner: player, x: target.x, y: target.y });
+          }
+        }
+      }
+    }
+
+    // Clean old cooldowns
+    if (st._hitCooldowns && st._hitCooldowns.size > 500) {
+      for (const [k, v] of st._hitCooldowns) {
+        if (now - v > 1000) st._hitCooldowns.delete(k);
+      }
+    }
+  }
+
+  /** Absorb damage through fortress shield */
+  fortressShieldAbsorb(amount) {
+    const st = this.state.minefield_shield;
+    if (!st || st.broken) return amount;
+    st.hp -= amount;
+    if (st.hp <= 0) {
+      const overflow = Math.abs(st.hp);
+      st.broken = true;
+      st.rechargeTimer = EVOLUTIONS.minefield_shield.recharge;
+      st.hp = 0;
+      return overflow;
+    }
+    return 0;
+  }
+
+  // --- VOID MINES / VOID TRAPS (mines + shockwave) ---
+  _updateVoidMines(dt, player, passives, mobs, otherPlayers, now, hits, projectiles) {
+    const st = this.state.void_mines;
+    if (!st) return;
+    const evo = EVOLUTIONS.void_mines;
+    const critChance = (passives.critical || 0) * PASSIVES.critical.perLevel;
+
+    // Update existing mines
+    for (const m of st.mines) {
+      m.life -= dt;
+
+      if (!m.exploded) {
+        // Pull nearby enemies toward mine
+        const allTargets = [...mobs.filter(mob => !mob.dead), ...otherPlayers.filter(p => p.alive && p.id !== player.id)];
+        for (const target of allTargets) {
+          const dx = m.x - target.x;
+          const dy = m.y - target.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < evo.pullRadius && dist > 5) {
+            // Pull force: stronger when closer
+            const pullStrength = evo.pullForce * (1 - dist / evo.pullRadius) * dt * 60;
+            target.x += (dx / dist) * pullStrength;
+            target.y += (dy / dist) * pullStrength;
+          }
+
+          // Explode on contact
+          const tr = target.size || target.radius || 15;
+          if (circleCollision(m.x, m.y, 12, target.x, target.y, tr)) {
+            m.exploded = true;
+            // AoE explosion damage
+            for (const t2 of allTargets) {
+              const tr2 = t2.size || t2.radius || 15;
+              if (distance(m.x, m.y, t2.x, t2.y) < evo.pullRadius + tr2) {
+                let dmg = evo.damage;
+                if (Math.random() < critChance) dmg *= 2;
+                const type = t2.id.startsWith('m') ? 'mob' : 'player';
+                hits.push({ type, target: t2, damage: dmg, owner: player, x: t2.x, y: t2.y });
+              }
+            }
+            // Explosion visual
+            projectiles.push({
+              i: m.id + '_exp', t: 'shockwave',
+              x: Math.round(m.x), y: Math.round(m.y),
+              r: 10, al: 1, lv: 4,
+            });
+            break;
+          }
+        }
+      }
+    }
+
+    st.mines = st.mines.filter(m => m.life > 0 && !m.exploded);
+
+    // Drop new mine
+    if (now - st.lastDrop >= evo.rate) {
+      st.lastDrop = now;
+      st.mines.push({
+        id: 'vm' + (nextProjId++),
+        x: player.x,
+        y: player.y,
+        life: evo.lifetime / 1000,
+        exploded: false,
+      });
+    }
+
+    // Render mines with pull radius indicator
+    for (const m of st.mines) {
+      if (!m.exploded) {
+        projectiles.push({
+          i: m.id,
+          t: 'void_mine',
+          x: Math.round(m.x),
+          y: Math.round(m.y),
+          r: 12,
+          pr: evo.pullRadius,
+          lf: Math.round(m.life * 10) / 10,
         });
       }
     }

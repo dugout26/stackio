@@ -191,6 +191,60 @@ export const SKIN_SHAPES = {
       ctx.restore();
     },
   },
+  // Rare ($2.99)
+  tank: {
+    id: 'tank',
+    name: 'Tank',
+    tier: 'rare',
+    draw: (ctx, x, y, radius, color, angle) => {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(angle);
+      // Tank body (rounded rectangle)
+      const bw = radius * 1.6;
+      const bh = radius * 1.2;
+      ctx.beginPath();
+      const cr = 4; // corner radius
+      ctx.moveTo(-bw / 2 + cr, -bh / 2);
+      ctx.lineTo(bw / 2 - cr, -bh / 2);
+      ctx.quadraticCurveTo(bw / 2, -bh / 2, bw / 2, -bh / 2 + cr);
+      ctx.lineTo(bw / 2, bh / 2 - cr);
+      ctx.quadraticCurveTo(bw / 2, bh / 2, bw / 2 - cr, bh / 2);
+      ctx.lineTo(-bw / 2 + cr, bh / 2);
+      ctx.quadraticCurveTo(-bw / 2, bh / 2, -bw / 2, bh / 2 - cr);
+      ctx.lineTo(-bw / 2, -bh / 2 + cr);
+      ctx.quadraticCurveTo(-bw / 2, -bh / 2, -bw / 2 + cr, -bh / 2);
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      // Tracks (top and bottom)
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
+      ctx.fillRect(-bw / 2 - 2, -bh / 2 - 3, bw + 4, 5);
+      ctx.fillRect(-bw / 2 - 2, bh / 2 - 2, bw + 4, 5);
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(-bw / 2 - 2, -bh / 2 - 3, bw + 4, 5);
+      ctx.strokeRect(-bw / 2 - 2, bh / 2 - 2, bw + 4, 5);
+      // Turret base (circle)
+      ctx.beginPath();
+      ctx.arc(0, 0, radius * 0.45, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.15)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      // Cannon barrel
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.fillRect(radius * 0.2, -3, radius * 1.0, 6);
+      ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(radius * 0.2, -3, radius * 1.0, 6);
+      ctx.restore();
+    },
+  },
   // Legendary ($4.99)
   crown: {
     id: 'crown',
@@ -521,6 +575,191 @@ export const SKIN_EXPLOSIONS = {
   },
 };
 
+// ===== WEAPON SKIN CATALOG =====
+
+export const SKIN_WEAPONS = {
+  default: {
+    id: 'default_weapon',
+    name: 'Standard',
+    tier: 'free',
+    colors: {
+      orbit: 'rgba(255,255,255,0.9)',
+      orbitStroke: '#00d4ff',
+      bullet: '#f1c40f',
+      laser: 'rgba(231, 76, 60, __ALPHA__)',
+      laserInner: 'rgba(255, 200, 200, __ALPHA__)',
+      shockwave: 'rgba(0, 212, 255, __ALPHA__)',
+      mine: 'rgba(231, 76, 60, __ALPHA__)',
+    },
+  },
+  gold_weapon: {
+    id: 'gold_weapon',
+    name: 'Gold',
+    tier: 'common',
+    colors: {
+      orbit: 'rgba(241,196,15,0.9)',
+      orbitStroke: '#f39c12',
+      bullet: '#f1c40f',
+      laser: 'rgba(241, 196, 15, __ALPHA__)',
+      laserInner: 'rgba(255, 240, 150, __ALPHA__)',
+      shockwave: 'rgba(241, 196, 15, __ALPHA__)',
+      mine: 'rgba(241, 196, 15, __ALPHA__)',
+    },
+  },
+  neon_weapon: {
+    id: 'neon_weapon',
+    name: 'Neon Blue',
+    tier: 'common',
+    colors: {
+      orbit: 'rgba(0,212,255,0.9)',
+      orbitStroke: '#00ffff',
+      bullet: '#00ffff',
+      laser: 'rgba(0, 212, 255, __ALPHA__)',
+      laserInner: 'rgba(200, 255, 255, __ALPHA__)',
+      shockwave: 'rgba(0, 255, 255, __ALPHA__)',
+      mine: 'rgba(0, 212, 255, __ALPHA__)',
+    },
+  },
+  fire_weapon: {
+    id: 'fire_weapon',
+    name: 'Inferno',
+    tier: 'rare',
+    colors: {
+      orbit: 'rgba(255,100,20,0.9)',
+      orbitStroke: '#e74c3c',
+      bullet: '#ff6b35',
+      laser: 'rgba(255, 100, 20, __ALPHA__)',
+      laserInner: 'rgba(255, 200, 50, __ALPHA__)',
+      shockwave: 'rgba(255, 100, 20, __ALPHA__)',
+      mine: 'rgba(255, 80, 20, __ALPHA__)',
+    },
+  },
+  plasma_weapon: {
+    id: 'plasma_weapon',
+    name: 'Plasma',
+    tier: 'legendary',
+    dynamic: true, // Uses animated hue
+    getColors: () => {
+      const hue = (Date.now() * 0.1) % 360;
+      return {
+        orbit: `hsla(${hue}, 100%, 70%, 0.9)`,
+        orbitStroke: `hsla(${hue}, 100%, 50%, 1)`,
+        bullet: `hsl(${hue}, 100%, 60%)`,
+        laser: `hsla(${hue}, 100%, 60%, __ALPHA__)`,
+        laserInner: `hsla(${hue}, 100%, 85%, __ALPHA__)`,
+        shockwave: `hsla(${hue}, 100%, 60%, __ALPHA__)`,
+        mine: `hsla(${hue}, 100%, 50%, __ALPHA__)`,
+      };
+    },
+  },
+};
+
+// ===== NAMETAG SKIN CATALOG =====
+
+export const SKIN_NAMETAGS = {
+  default_name: {
+    id: 'default_name',
+    name: 'Standard',
+    tier: 'free',
+    getStyle: () => ({
+      fillStyle: '#ffffff',
+      shadowColor: null,
+      shadowBlur: 0,
+    }),
+  },
+  gold_name: {
+    id: 'gold_name',
+    name: 'Gold',
+    tier: 'common',
+    getStyle: () => ({
+      fillStyle: '#f1c40f',
+      shadowColor: '#f39c12',
+      shadowBlur: 4,
+    }),
+  },
+  red_name: {
+    id: 'red_name',
+    name: 'Crimson',
+    tier: 'common',
+    getStyle: () => ({
+      fillStyle: '#e74c3c',
+      shadowColor: '#c0392b',
+      shadowBlur: 4,
+    }),
+  },
+  rainbow_name: {
+    id: 'rainbow_name',
+    name: 'Rainbow',
+    tier: 'rare',
+    getStyle: () => {
+      const hue = (Date.now() * 0.1) % 360;
+      return {
+        fillStyle: `hsl(${hue}, 100%, 65%)`,
+        shadowColor: `hsl(${hue}, 100%, 50%)`,
+        shadowBlur: 6,
+      };
+    },
+  },
+  glow_name: {
+    id: 'glow_name',
+    name: 'Neon Glow',
+    tier: 'rare',
+    getStyle: () => ({
+      fillStyle: '#00ffff',
+      shadowColor: '#00d4ff',
+      shadowBlur: 10,
+    }),
+  },
+  fire_name: {
+    id: 'fire_name',
+    name: 'Inferno',
+    tier: 'legendary',
+    getStyle: () => {
+      const flicker = Math.sin(Date.now() * 0.008) * 0.15 + 0.85;
+      return {
+        fillStyle: `rgba(255, ${Math.floor(140 * flicker)}, 20, 1)`,
+        shadowColor: '#e74c3c',
+        shadowBlur: 12 * flicker,
+      };
+    },
+  },
+};
+
+// ===== KILL SOUND CATALOG =====
+
+export const SKIN_KILLSOUNDS = {
+  default_killsound: {
+    id: 'default_killsound',
+    name: 'Standard',
+    tier: 'free',
+    soundId: 'default',
+  },
+  ding_killsound: {
+    id: 'ding_killsound',
+    name: 'Ding!',
+    tier: 'common',
+    soundId: 'ding',
+  },
+  explosion_killsound: {
+    id: 'explosion_killsound',
+    name: 'Explosion',
+    tier: 'common',
+    soundId: 'explosion',
+  },
+  airhorn_killsound: {
+    id: 'airhorn_killsound',
+    name: 'Air Horn',
+    tier: 'rare',
+    soundId: 'airhorn',
+  },
+  dramatic_killsound: {
+    id: 'dramatic_killsound',
+    name: 'Dramatic',
+    tier: 'rare',
+    soundId: 'dramatic',
+  },
+};
+
 // ===== PLAYER SKIN STATE =====
 
 /**
@@ -529,13 +768,44 @@ export const SKIN_EXPLOSIONS = {
  */
 export class SkinManager {
   constructor() {
-    this.equippedShape = 'default';
-    this.equippedTrail = 'none';
-    this.equippedExplosion = 'default';
-    this.ownedSkins = new Set(['default', 'hexagon', 'none', 'dots']);
-
     // Death effect state
     this.deathEffects = []; // { x, y, progress, color, explosionId }
+
+    // Load from localStorage or use defaults
+    const saved = this._loadFromStorage();
+    this.equippedShape = saved.equippedShape || 'default';
+    this.equippedTrail = saved.equippedTrail || 'none';
+    this.equippedExplosion = saved.equippedExplosion || 'default';
+    this.equippedWeapon = saved.equippedWeapon || 'default_weapon';
+    this.equippedNametag = saved.equippedNametag || 'default_name';
+    this.equippedKillsound = saved.equippedKillsound || 'default_killsound';
+    this.ownedSkins = new Set(saved.ownedSkins || [
+      'default', 'hexagon', 'none', 'dots',
+      'default_weapon', 'default_name', 'default_killsound',
+    ]);
+  }
+
+  _loadFromStorage() {
+    try {
+      const data = localStorage.getItem('stackio_skins');
+      return data ? JSON.parse(data) : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  _saveToStorage() {
+    try {
+      localStorage.setItem('stackio_skins', JSON.stringify({
+        equippedShape: this.equippedShape,
+        equippedTrail: this.equippedTrail,
+        equippedExplosion: this.equippedExplosion,
+        equippedWeapon: this.equippedWeapon,
+        equippedNametag: this.equippedNametag,
+        equippedKillsound: this.equippedKillsound,
+        ownedSkins: [...this.ownedSkins],
+      }));
+    } catch (e) { /* ignore storage errors */ }
   }
 
   /** Equip a skin if owned */
@@ -545,13 +815,32 @@ export class SkinManager {
       case 'shape': this.equippedShape = id; break;
       case 'trail': this.equippedTrail = id; break;
       case 'explosion': this.equippedExplosion = id; break;
+      case 'weapon': this.equippedWeapon = id; break;
+      case 'nametag': this.equippedNametag = id; break;
+      case 'killsound': this.equippedKillsound = id; break;
     }
+    this._saveToStorage();
     return true;
   }
 
   /** Add a skin to owned set */
   unlock(id) {
     this.ownedSkins.add(id);
+    this._saveToStorage();
+  }
+
+  /** Merge skins from server (called after login) */
+  syncFromServer(skinIds) {
+    if (!Array.isArray(skinIds)) return;
+    for (const id of skinIds) {
+      this.ownedSkins.add(id);
+    }
+    this._saveToStorage();
+  }
+
+  /** Get array of owned skin IDs */
+  getOwnedSkinIds() {
+    return [...this.ownedSkins];
   }
 
   /** Draw the player body using equipped shape skin */
@@ -592,12 +881,36 @@ export class SkinManager {
     this.deathEffects = this.deathEffects.filter(fx => fx.progress < 1);
   }
 
+  /** Get weapon skin colors for rendering */
+  getWeaponColors() {
+    const skin = SKIN_WEAPONS[this.equippedWeapon] || SKIN_WEAPONS.default;
+    if (skin.dynamic && skin.getColors) {
+      return skin.getColors();
+    }
+    return skin.colors;
+  }
+
+  /** Get nametag style for rendering */
+  getNametag() {
+    const tag = SKIN_NAMETAGS[this.equippedNametag] || SKIN_NAMETAGS.default_name;
+    return tag.getStyle();
+  }
+
+  /** Get kill sound ID */
+  getKillSoundId() {
+    const ks = SKIN_KILLSOUNDS[this.equippedKillsound] || SKIN_KILLSOUNDS.default_killsound;
+    return ks.soundId;
+  }
+
   /** Get equipped skin IDs for network (to show to other players) */
   getEquipped() {
     return {
       shape: this.equippedShape,
       trail: this.equippedTrail,
       explosion: this.equippedExplosion,
+      weapon: this.equippedWeapon,
+      nametag: this.equippedNametag,
+      killsound: this.equippedKillsound,
     };
   }
 
@@ -612,6 +925,15 @@ export class SkinManager {
     }
     for (const [id, skin] of Object.entries(SKIN_EXPLOSIONS)) {
       all.push({ ...skin, type: 'explosion' });
+    }
+    for (const [id, skin] of Object.entries(SKIN_WEAPONS)) {
+      all.push({ id: skin.id, name: skin.name, tier: skin.tier, type: 'weapon' });
+    }
+    for (const [id, skin] of Object.entries(SKIN_NAMETAGS)) {
+      all.push({ id: skin.id, name: skin.name, tier: skin.tier, type: 'nametag' });
+    }
+    for (const [id, skin] of Object.entries(SKIN_KILLSOUNDS)) {
+      all.push({ id: skin.id, name: skin.name, tier: skin.tier, type: 'killsound' });
     }
     return all;
   }

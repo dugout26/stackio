@@ -19,6 +19,10 @@ html, body {
   display: block;
   width: 100%;
   height: 100%;
+  cursor: default;
+}
+
+#gameCanvas.playing {
   cursor: none;
 }
 
@@ -438,6 +442,25 @@ html, body {
   box-shadow: 0 0 15px rgba(155,89,182,0.3);
 }
 
+.btn-menu {
+  padding: 14px 30px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.6);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-menu:hover {
+  background: rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.9);
+  border-color: rgba(255,255,255,0.4);
+}
+
 /* ===== PARTICLES BACKGROUND ===== */
 #menu-particles {
   position: absolute;
@@ -528,7 +551,7 @@ html, body {
     gap: 8px;
   }
 
-  .btn-restart, .btn-share {
+  .btn-restart, .btn-share, .btn-menu {
     width: 200px;
     text-align: center;
   }
@@ -845,4 +868,206 @@ html, body {
   color: rgba(255, 255, 255, 0.6);
   line-height: 1.6;
   margin-bottom: 4px;
+}
+
+/* Leaderboard entries */
+.leaderboard-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lb-entry {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.lb-rank {
+  font-size: 16px;
+  min-width: 28px;
+  text-align: center;
+}
+
+.lb-name {
+  flex: 1;
+  font-weight: 600;
+  font-size: 14px;
+  color: #00d4ff;
+}
+
+.lb-score {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* ===== AUTH MODAL ===== */
+.auth-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(10, 10, 46, 0.92);
+  backdrop-filter: blur(6px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 250;
+}
+
+.auth-overlay.active {
+  display: flex;
+}
+
+.auth-panel {
+  width: 90%;
+  max-width: 380px;
+  background: rgba(15, 15, 50, 0.95);
+  border: 1px solid rgba(0, 212, 255, 0.15);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.auth-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.auth-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #00d4ff;
+  letter-spacing: 2px;
+}
+
+.auth-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.auth-close:hover {
+  border-color: #e74c3c;
+  color: #e74c3c;
+}
+
+.auth-tabs {
+  display: flex;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.auth-tab {
+  flex: 1;
+  padding: 12px 0;
+  border: none;
+  background: none;
+  color: rgba(255, 255, 255, 0.4);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.auth-tab.active {
+  color: #00d4ff;
+  border-bottom-color: #00d4ff;
+}
+
+.auth-form {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.auth-input {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  background: rgba(10, 10, 46, 0.8);
+  color: #ffffff;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.auth-input:focus {
+  border-color: #00d4ff;
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.2);
+}
+
+.auth-submit {
+  padding: 12px 0;
+  border-radius: 8px;
+  border: none;
+  background: linear-gradient(135deg, #00d4ff, #0099cc);
+  color: #0a0a2e;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: opacity 0.2s;
+}
+
+.auth-submit:hover {
+  opacity: 0.9;
+}
+
+.auth-error {
+  color: #e74c3c;
+  font-size: 12px;
+  text-align: center;
+  min-height: 16px;
+}
+
+/* Shop account indicator */
+.shop-account {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.shop-account-email {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shop-login-btn, .shop-logout-btn {
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  background: rgba(0, 212, 255, 0.1);
+  color: #00d4ff;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.shop-login-btn:hover, .shop-logout-btn:hover {
+  background: rgba(0, 212, 255, 0.2);
 }

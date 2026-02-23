@@ -66,9 +66,10 @@ export class ServerPlayer {
     // Grow radius with level
     this.radius = Math.min(PLAYER.RADIUS + (this.level - 1) * 1.5, 50);
 
-    // Speed passive
+    // Speed passive + level bonus (+2% per level)
     const speedBonus = (this.passives.speed || 0) * PASSIVES.speed.perLevel;
-    const currentSpeed = PLAYER.BASE_SPEED * (1 + speedBonus);
+    const levelSpeedBonus = (this.level - 1) * 0.02;
+    const currentSpeed = PLAYER.BASE_SPEED * (1 + speedBonus + levelSpeedBonus);
 
     if (this.moving) {
       this.x += Math.cos(this.angle) * currentSpeed;

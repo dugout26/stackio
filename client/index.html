@@ -6,6 +6,21 @@
   <meta name="description" content="STACK.io - Free multiplayer survival browser game. Auto-attack enemies, choose weapons, dominate the leaderboard.">
   <title>STACK.io - Multiplayer Survival Browser Game</title>
   <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="canonical" href="https://stack.mound.run/">
+  <!-- Open Graph (Facebook, Discord, Slack link previews) -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://stack.mound.run/">
+  <meta property="og:title" content="STACK.io - Multiplayer Survival Browser Game">
+  <meta property="og:description" content="Auto-attack enemies, collect XP, dominate the leaderboard. Free browser game — no download needed.">
+  <meta property="og:image" content="https://stack.mound.run/og-image.png">
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="STACK.io - Multiplayer Survival Browser Game">
+  <meta name="twitter:description" content="Auto-attack enemies, collect XP, dominate the leaderboard. Free browser game — no download needed.">
+  <meta name="twitter:image" content="https://stack.mound.run/og-image.png">
+  <!-- Google AdSense: uncomment and replace ca-pub-XXXXXXXX with your publisher ID -->
+  <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXX" crossorigin="anonymous"></script> -->
 </head>
 <body>
   <canvas id="gameCanvas"></canvas>
@@ -39,6 +54,7 @@
       <button class="btn-nav">SHOP</button>
       <button class="btn-nav">LEADERBOARD</button>
       <button class="btn-nav">HOW TO PLAY</button>
+      <button class="btn-nav" id="btn-account">ACCOUNT</button>
     </div>
   </div>
 
@@ -57,7 +73,18 @@
     <div class="death-buttons">
       <button id="btn-restart" class="btn-restart">PLAY AGAIN</button>
       <button class="btn-share">SHARE</button>
+      <button id="btn-menu" class="btn-menu">MAIN MENU</button>
     </div>
+    <!-- AdSense ad slot (shown on death screen) -->
+    <!-- Uncomment when AdSense is approved:
+    <div class="ad-container" style="margin-top: 20px; text-align: center;">
+      <ins class="adsbygoogle"
+           style="display:inline-block;width:320px;height:100px"
+           data-ad-client="ca-pub-XXXXXXXX"
+           data-ad-slot="YYYYYYYY"></ins>
+      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    </div>
+    -->
   </div>
 
   <!-- How To Play Modal -->
@@ -98,6 +125,21 @@
           <p>Stay in the safe zone (green circle) when you spawn.</p>
           <p>Kill pentagon mobs for the most XP!</p>
           <p>Build toward weapon evolutions for maximum power.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaderboard Modal -->
+  <div id="leaderboard-overlay" class="howtoplay-overlay">
+    <div class="howtoplay-panel">
+      <div class="howtoplay-header">
+        <h2 class="howtoplay-title">LEADERBOARD</h2>
+        <button class="howtoplay-close" id="leaderboard-close">&times;</button>
+      </div>
+      <div class="howtoplay-content">
+        <div id="leaderboard-list" class="leaderboard-list">
+          <p style="text-align:center; color:#888;">Loading...</p>
         </div>
       </div>
     </div>

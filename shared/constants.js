@@ -80,7 +80,7 @@ export const WEAPONS = {
 
 export const PASSIVES = {
   speed:    { name: 'Speed Boost', description: '+10% movement speed', perLevel: 0.1, maxLevel: 5 },
-  magnet:   { name: 'Magnet',      description: '+20% XP pickup radius', perLevel: 0.2, maxLevel: 5 },
+  magnet:   { name: 'Magnet',      description: '+40% XP pickup radius', perLevel: 0.4, maxLevel: 5 },
   armor:    { name: 'Armor',       description: '-10% damage taken', perLevel: 0.1, maxLevel: 5 },
   regen:    { name: 'Regen',       description: '+1 HP/sec', perLevel: 1, maxLevel: 3 },
   critical: { name: 'Critical',    description: '+5% crit chance', perLevel: 0.05, maxLevel: 5 },

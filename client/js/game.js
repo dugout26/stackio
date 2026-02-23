@@ -6,6 +6,7 @@ import { Camera } from './camera.js';
 import { Input } from './input.js';
 import { Renderer } from './renderer.js';
 import { MAP } from '/shared/constants.js';
+import { audio } from './audio.js';
 
 export class Game {
   constructor(canvas, ctx, network, ui, skinManager) {
@@ -15,6 +16,7 @@ export class Game {
     this.ui = ui;
     this.skinManager = skinManager;
     this.renderer = new Renderer(canvas, ctx);
+    this.renderer.setSkinManager(skinManager);
     this.camera = new Camera(canvas);
     this.input = new Input(canvas);
 
@@ -42,6 +44,8 @@ export class Game {
     // Level-up options received from server
     this.network.onLevelUp = (data) => {
       this.paused = true;
+      this.canvas.classList.remove('playing'); // Show cursor for card selection
+      audio.playLevelUp();
       this.ui.showLevelUp(data.options);
     };
 
@@ -49,10 +53,16 @@ export class Game {
     this.ui.onLevelUpChoice = (index, opt) => {
       this.network.sendLevelUp(index);
       this.paused = false;
+      const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      if (!isMobile) {
+        this.canvas.classList.add('playing'); // Hide cursor again
+      }
     };
 
     // Death notification
     this.network.onDeath = (data) => {
+      this.canvas.classList.remove('playing'); // Show cursor for death screen buttons
+      audio.playDeath();
       // Trigger death effect at player's last position
       if (this.skinManager) {
         this.skinManager.triggerDeath(this.localPlayerX, this.localPlayerY, '#e74c3c');
@@ -73,6 +83,12 @@ export class Game {
 
     // Kill feed
     this.network.onKillFeed = (data) => {
+      // Play kill sound if local player got the kill (using equipped kill sound)
+      const localPlayer = this.network.getLocalPlayer();
+      if (localPlayer && data.killer === localPlayer.n) {
+        const killSoundId = this.skinManager ? this.skinManager.getKillSoundId() : 'default';
+        audio.playKill(killSoundId);
+      }
       this.killFeed.push({
         killer: data.killer,
         victim: data.victim,
@@ -179,8 +195,8 @@ export class Game {
       this.skinManager
     );
 
-    // Draw projectiles
-    this.renderer.drawProjectiles(this.network.projectiles, this.camera);
+    // Draw projectiles (pass localPlayerId for weapon skins)
+    this.renderer.drawProjectiles(this.network.projectiles, this.camera, this.network.playerId);
 
     // Draw death effects
     if (this.skinManager) {
@@ -213,7 +229,8 @@ export class Game {
       this.localPlayerY
     );
 
-    // Draw virtual joystick (mobile)
+    // Draw crosshair cursor (desktop) or virtual joystick (mobile)
+    this.renderer.drawCrosshair(this.input.mouseX, this.input.mouseY);
     this.input.drawJoystick(this.ctx);
   }
 }

@@ -42,6 +42,7 @@ export class UI {
     this.onPlay = null;
     this.onLevelUpChoice = null;
     this.onRestart = null;
+    this.onMainMenu = null;
     this.onShop = null;
 
     this._initEvents();
@@ -65,12 +66,35 @@ export class UI {
       if (this.onRestart) this.onRestart();
     });
 
+    // Main menu button on death screen
+    const btnMenu = document.getElementById('btn-menu');
+    if (btnMenu) {
+      btnMenu.addEventListener('click', () => {
+        if (this.onMainMenu) this.onMainMenu();
+      });
+    }
+
     // Shop button (first .btn-nav)
     const navButtons = document.querySelectorAll('.btn-nav');
     if (navButtons[0]) {
       navButtons[0].addEventListener('click', () => {
         if (this.onShop) this.onShop();
       });
+    }
+
+    // Leaderboard button (second .btn-nav)
+    const lbOverlay = document.getElementById('leaderboard-overlay');
+    if (navButtons[1] && lbOverlay) {
+      navButtons[1].addEventListener('click', () => {
+        lbOverlay.classList.add('active');
+        this._fetchLeaderboard();
+      });
+      const lbClose = document.getElementById('leaderboard-close');
+      if (lbClose) {
+        lbClose.addEventListener('click', () => {
+          lbOverlay.classList.remove('active');
+        });
+      }
     }
 
     // How To Play button (third .btn-nav)
@@ -280,5 +304,33 @@ export class UI {
 
   hideDeath() {
     this.deathScreen.classList.remove('active');
+  }
+
+  // --- Leaderboard ---
+  async _fetchLeaderboard() {
+    const list = document.getElementById('leaderboard-list');
+    if (!list) return;
+
+    try {
+      const res = await fetch('/api/leaderboard');
+      const data = await res.json();
+      const entries = data.top || [];
+
+      if (entries.length === 0) {
+        list.innerHTML = '<p style="text-align:center; color:#888;">No scores yet. Play to be the first!</p>';
+        return;
+      }
+
+      list.innerHTML = entries.map((e, i) => {
+        const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
+        return `<div class="lb-entry">
+          <span class="lb-rank">${medal}</span>
+          <span class="lb-name">${e.name}</span>
+          <span class="lb-score">Lv.${e.level} — ${e.score.toLocaleString()} XP</span>
+        </div>`;
+      }).join('');
+    } catch {
+      list.innerHTML = '<p style="text-align:center; color:#888;">Could not load leaderboard</p>';
+    }
   }
 }
