@@ -24,7 +24,7 @@ const server = createServer(app);
 const io = new Server(server, {
   cors: {
     origin: process.env.NODE_ENV === 'production'
-      ? 'https://stack.mound.run'
+      ? ['https://stack.mound.run', 'https://stackio.onrender.com']
       : '*',
     methods: ['GET', 'POST'],
   },
