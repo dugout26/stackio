@@ -1,5 +1,5 @@
 // Skin shop UI + preview
-// Displays purchasable skins, handles equip, and integrates with Stripe
+// Displays skins, handles equip. Paid skins coming soon (in-game currency planned)
 
 import { SKIN_SHAPES, SKIN_TRAILS, SKIN_EXPLOSIONS, SKIN_WEAPONS, SKIN_NAMETAGS, SKIN_KILLSOUNDS, SkinManager } from './skins.js';
 import { SKIN_TIERS } from '/shared/constants.js';
@@ -15,10 +15,10 @@ const TIER_COLORS = {
 
 const TIER_LABELS = {
   free: 'FREE',
-  common: '$0.99',
-  rare: '$2.99',
-  legendary: '$4.99',
-  bundle: '$9.99',
+  common: 'COMING SOON',
+  rare: 'COMING SOON',
+  legendary: 'COMING SOON',
+  bundle: 'COMING SOON',
 };
 
 export class Shop {
@@ -74,7 +74,7 @@ export class Shop {
       });
     });
 
-    // Equip / Buy button
+    // Equip button (purchase disabled — coming soon)
     this.container.querySelector('#shop-equip-btn').addEventListener('click', () => {
       if (!this._selectedSkin) return;
 
@@ -85,10 +85,8 @@ export class Shop {
         if (success) {
           this._renderGrid(this._currentTab);
         }
-      } else if (this._selectedSkin.tier !== 'free') {
-        // Purchase via Stripe Checkout
-        this._purchaseSkin(this._selectedSkin);
       }
+      // Paid skins: do nothing (button shows COMING SOON)
     });
 
     this._currentTab = 'shape';
@@ -232,8 +230,8 @@ export class Shop {
       btnEl.disabled = false;
       this.skinManager.unlock(skin.id);
     } else {
-      btnEl.textContent = `BUY ${TIER_LABELS[skin.tier]}`;
-      btnEl.disabled = false;
+      btnEl.textContent = 'COMING SOON';
+      btnEl.disabled = true;
     }
 
     // Animate preview
@@ -281,48 +279,6 @@ export class Shop {
       ctx.font = '40px sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText('🔊', 60, 70);
-    }
-  }
-
-  /** Purchase a skin via server-side Stripe Checkout */
-  async _purchaseSkin(skin) {
-    const btn = this.container.querySelector('#shop-equip-btn');
-    btn.textContent = 'LOADING...';
-    btn.disabled = true;
-
-    try {
-      const res = await fetch('/api/create-checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ skinId: skin.id, tier: skin.tier }),
-      });
-
-      const data = await res.json();
-
-      if (res.status === 401) {
-        // Not logged in — prompt login
-        btn.textContent = 'LOGIN TO BUY';
-        btn.disabled = false;
-        if (this.onLoginRequired) this.onLoginRequired();
-        return;
-      }
-
-      if (data.url) {
-        // Redirect to Stripe Checkout
-        window.location.href = data.url;
-      } else if (data.unlocked) {
-        // Free tier - directly unlocked
-        this.skinManager.unlock(skin.id);
-        this.skinManager.equip(this._selectedType, skin.id);
-        this._renderGrid(this._currentTab);
-      } else {
-        btn.textContent = 'ERROR';
-        setTimeout(() => this._updatePreview(skin, this._selectedType, false, false), 2000);
-      }
-    } catch (err) {
-      console.error('[Shop] Purchase error:', err);
-      btn.textContent = 'ERROR';
-      setTimeout(() => this._updatePreview(skin, this._selectedType, false, false), 2000);
     }
   }
 

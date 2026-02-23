@@ -19,8 +19,8 @@
   <meta name="twitter:title" content="STACK.io - Multiplayer Survival Browser Game">
   <meta name="twitter:description" content="Auto-attack enemies, collect XP, dominate the leaderboard. Free browser game — no download needed.">
   <meta name="twitter:image" content="https://stack.mound.run/og-image.png">
-  <!-- Google AdSense: uncomment and replace ca-pub-XXXXXXXX with your publisher ID -->
-  <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXX" crossorigin="anonymous"></script> -->
+  <!-- Google AdSense: replace ca-pub-XXXXXXXX with your publisher ID after approval -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXX" crossorigin="anonymous"></script>
 </head>
 <body>
   <canvas id="gameCanvas"></canvas>
@@ -56,6 +56,13 @@
       <button class="btn-nav">HOW TO PLAY</button>
       <button class="btn-nav" id="btn-account">ACCOUNT</button>
     </div>
+    <!-- AdSense: main menu ad (replace ca-pub and ad-slot after approval) -->
+    <div class="ad-container ad-menu">
+      <ins class="adsbygoogle"
+           style="display:inline-block;width:320px;height:50px"
+           data-ad-client="ca-pub-XXXXXXXX"
+           data-ad-slot="MENU_AD"></ins>
+    </div>
   </div>
 
   <!-- Level Up Overlay -->
@@ -75,16 +82,13 @@
       <button class="btn-share">SHARE</button>
       <button id="btn-menu" class="btn-menu">MAIN MENU</button>
     </div>
-    <!-- AdSense ad slot (shown on death screen) -->
-    <!-- Uncomment when AdSense is approved:
-    <div class="ad-container" style="margin-top: 20px; text-align: center;">
+    <!-- AdSense: death screen ad (replace ca-pub and ad-slot after approval) -->
+    <div class="ad-container ad-death">
       <ins class="adsbygoogle"
            style="display:inline-block;width:320px;height:100px"
            data-ad-client="ca-pub-XXXXXXXX"
-           data-ad-slot="YYYYYYYY"></ins>
-      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+           data-ad-slot="DEATH_SCREEN_AD"></ins>
     </div>
-    -->
   </div>
 
   <!-- How To Play Modal -->

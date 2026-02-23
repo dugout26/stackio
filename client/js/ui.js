@@ -266,6 +266,12 @@ export class UI {
   // --- Death Screen ---
   showDeath(stats) {
     this.deathScreen.classList.add('active');
+
+    // Push AdSense ad on death screen
+    try {
+      (window.adsbygoogle = window.adsbygoogle || []).push({});
+    } catch (e) { /* AdSense not loaded yet */ }
+
     this.deathKiller.textContent = stats.killer
       ? `Killed by: ${stats.killer}`
       : 'Killed by a mob';

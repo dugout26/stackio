@@ -318,18 +318,13 @@ ui.onMainMenu = () => {
   ui.showMenu();
 };
 
-// Handle Stripe purchase redirect
-const urlParams = new URLSearchParams(window.location.search);
-const purchasedSkin = urlParams.get('purchased');
-if (purchasedSkin) {
-  skinManager.unlock(purchasedSkin);
-  // Clean URL
-  window.history.replaceState({}, '', '/');
-  console.log(`[Shop] Skin unlocked: ${purchasedSkin}`);
-}
-
 // Check auth state on load
 checkAuth();
+
+// Push AdSense ads on page load (menu ad)
+try {
+  (window.adsbygoogle = window.adsbygoogle || []).push({});
+} catch (e) { /* AdSense not ready */ }
 
 // Show menu on load
 ui.showMenu();

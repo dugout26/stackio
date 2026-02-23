@@ -1071,3 +1071,22 @@ html, body {
 .shop-login-btn:hover, .shop-logout-btn:hover {
   background: rgba(0, 212, 255, 0.2);
 }
+
+/* ===== AD CONTAINERS ===== */
+.ad-container {
+  text-align: center;
+  overflow: hidden;
+}
+
+.ad-death {
+  margin-top: 20px;
+}
+
+.ad-menu {
+  margin-top: 16px;
+}
+
+/* Hide empty ad slots gracefully */
+.ad-container ins.adsbygoogle[data-ad-status="unfilled"] {
+  display: none !important;
+}
